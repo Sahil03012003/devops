@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'class-registration-site'
+        CONTAINER_NAME = 'class-registration-container'
+    }
+
     stages {
         stage('Clone Repo') {
             steps {
@@ -11,26 +16,26 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    dockerImage = docker.build("class-registration-site", ".")
-                }
+                echo "Building Docker image..."
+                sh "docker build -t ${IMAGE_NAME} ."
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                sh 'docker rm -f class-registration-container || true'
-                sh 'docker run -d -p 8080:80 --name class-registration-container class-registration-site'
+                echo "Running Docker container..."
+                sh "docker rm -f ${CONTAINER_NAME} || true"
+                sh "docker run -d -p 8080:80 --name ${CONTAINER_NAME} ${IMAGE_NAME}"
             }
         }
     }
 
     post {
         success {
-            echo 'Site deployed successfully on http://localhost:8080'
+            echo '✅ Site deployed successfully on http://localhost:8080'
         }
         failure {
-            echo 'Deployment failed!'
+            echo '❌ Deployment failed!'
         }
     }
 }
