@@ -1,35 +1,41 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'class-registration-site'
+        CONTAINER_NAME = 'class-registration-container'
+        PORT_MAPPING = '8081:80'
+    }
+
     stages {
         stage('Build Docker Image') {
             steps {
-                echo '📳 Building Docker image: class-registration-site'
-                bat 'docker build -t class-registration-site .'
+                echo 'Building Docker image...'
+                bat "docker build -t ${env.IMAGE_NAME} ."
+            }
+        }
+
+        stage('Remove Existing Container') {
+            steps {
+                echo 'Removing existing Docker container if exists...'
+                bat "docker rm -f ${env.CONTAINER_NAME} || exit 0"
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                echo '🚀 Running Docker container...'
-                bat 'docker run -d -p 8081:80 --name class-registration-container class-registration-site'
-            }
-        }
-
-        stage('Verify Deployment') {
-            steps {
-                echo '🔍 Verifying deployment...'
-                bat 'curl http://localhost:8081'
+                echo 'Running new Docker container...'
+                bat "docker run -d -p ${env.PORT_MAPPING} --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}"
             }
         }
     }
 
     post {
         success {
-            echo '✅ Deployment succeeded.'
+            echo "Deployment successful. Application running at http://localhost:8081"
         }
         failure {
-            echo '❌ Deployment failed. Check the logs above.'
+            echo "Pipeline failed. Please check the error logs."
         }
     }
 }
